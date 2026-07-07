@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D-School OBEC Home Visit Sync Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(22, 28, 45, 0.6);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #4f46e5;
+            --primary-hover: #6366f1;
+            --primary-glow: rgba(79, 70, 229, 0.35);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', 'Sarabun', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2.5rem;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        header {
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-area h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 50%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo-area p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            background-color: rgba(79, 70, 229, 0.15);
+            border: 1px solid rgba(79, 70, 229, 0.3);
+            color: #a5b4fc;
+            padding: 0.4rem 0.8rem;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 2rem;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.75rem;
+            color: #e0e7ff;
+        }
+
+        .success-box {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 10px;
+            padding: 1rem;
+            color: #a7f3d0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .success-box h4 {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #ecfdf5;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        ol, ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            color: #f43f5e;
+            font-size: 0.9rem;
+        }
+
+        .code-block-container {
+            position: relative;
+            margin-top: 1rem;
+        }
+
+        pre {
+            background: #060913;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1.25rem;
+            border-radius: 10px;
+            overflow-x: auto;
+            max-height: 350px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .student-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-area">
+            <h1>D-School OBEC Home Visit Sync</h1>
+            <p>ระบบซิงค์ฟอร์มบันทึกการเยี่ยมบ้านนักเรียน สพฐ. (OBEC) ของชั้น ม.5/12 โรงเรียนสุรศักดิ์มนตรี</p>
+        </div>
+        <span class="badge">ห้อง ม.5/12</span>
+    </header>
+
+    <div class="grid-container">
+        <!-- Main Area -->
+        <main>
+            <!-- Deployment Steps -->
+            <section class="card">
+                <h2 class="card-title">🚀 ขั้นตอนการดีพลอยหน้าเว็บกรอกข้อมูล (Google Web App)</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+                    เพื่อให้นักเรียนสามารถกรอกข้อมูลพิกัด GPS อัตโนมัติและอัปโหลดภาพแบบไร้ขีดจำกัดได้อย่างปลอดภัยและสมบูรณ์ ให้ทำตามขั้นตอนการดีพลอยดังนี้:
+                </p>
+                
+                <ol>
+                    <li>เปิดไปที่เว็บ <a href="https://script.google.com" target="_blank" style="color: var(--primary-hover); font-weight: 600;">Google Apps Script</a> และล็อกอินด้วยบัญชี Google ของครู</li>
+                    <li>สร้างโปรเจกต์ใหม่และนำโค้ดในไฟล์ <strong><code>obec_backend_web_app.js</code></strong> ไปวางทับในไฟล์โค้ด <code>Code.gs</code></li>
+                    <li>ในหน้าต่าง Google Apps Script ซ้ายมือ ให้กดปุ่ม <strong>"+" (ถัดจากคำว่า Files)</strong> -> เลือกสร้างไฟล์ <strong>"HTML"</strong> -> ตั้งชื่อไฟล์ว่า <code>visit_form</code></li>
+                    <li>นำโค้ดทั้งหมดจากไฟล์ <strong><code>visit_form.html</code></strong> ไปวางในไฟล์ <code>visit_form.html</code> ที่สร้างใหม่</li>
+                    <li>
+                        คลิกปุ่ม <strong>"Deploy"</strong> (มุมบนขวา) -> เลือก <strong>"New deployment"</strong>
+                        <ul>
+                            <li><strong>Type:</strong> เลือกเป็น "Web app"</li>
+                            <li><strong>Execute as:</strong> เลือกเป็น "Me" (อีเมลของครู)</li>
+                            <li><strong>Who has access:</strong> เลือกเป็น "Anyone" (ทุกคน)</li>
+                        </ul>
+                    </li>
+                    <li>กด <strong>Deploy</strong> ยอมรับสิทธิ์การเข้าถึง (Authorize Access) และคัดลอก **Web app URL** ไปแจกให้นักเรียนส่งพิกัดและรูปบ้านได้ทันที!</li>
+                </ol>
+            </section>
+
+            <!-- Script copy helper -->
+            <section class="card">
+                <h2 class="card-title">📜 โค้ดสำหรับหลังบ้าน (obec_backend_web_app.js)</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">คัดลอกโค้ดสคริปต์นี้ไปวางในไฟล์ <code>Code.gs</code> บน Google Apps Script:</p>
+                
+                <div class="code-block-container">
+                    <button class="copy-btn" onclick="copyCode('backend-code')">คัดลอก</button>
+                    <pre><code id="backend-code">// โค้ดนี้จะไปแสดงใน obec_backend_web_app.js
+// กรุณาเปิดไฟล์จริงที่ /home/tor19006/dschool-weekly-report-bot/obec_backend_web_app.js เพื่อคัดลอกไฟล์ตัวเต็ม
+                    </code></pre>
+                </div>
+            </section>
+        </main>
+
+        <!-- Sidebar -->
+        <aside>
+            <section class="card">
+                <h2 class="card-title">📂 รายชื่อนักเรียน ม.5/12</h2>
+                <div class="student-table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>รหัส</th>
+                                <th>ชื่อ-นามสกุล</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-roster">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2 class="card-title">⚙️ ซิงค์ข้อมูลเข้า D-School</h2>
+                <p style="font-size: 0.9rem; margin-bottom: 0.8rem; line-height: 1.5; color: var(--text-muted);">
+                    นำไอดี Google Sheets ที่ได้รับหลังการรันดีพลอยมากรอกลงในไฟล์ <code>.env</code>:
+                </p>
+                <div style="background: #060913; padding: 0.75rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem; border: 1px solid var(--border-color); margin-bottom: 1rem;">
+                    GOOGLE_SHEET_ID=ไอดีสเปรดชีตของคุณ
+                </div>
+                <p style="font-size: 0.9rem; margin-bottom: 0.8rem; line-height: 1.5; color: var(--text-muted);">
+                    จากนั้นสั่งรันคำสั่งซิงค์ข้อมูลผ่าน Terminal:
+                </p>
+                <div style="background: #060913; padding: 0.75rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem; border: 1px solid var(--border-color); margin-bottom: 1rem;">
+                    python3 dschool_visit_sync.py
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <script>
+        const roster = {
+            "51655": "นายธนพงษ์ นาเอก", "51666": "นายนนทวัฒน์ โอรทัต", "51669": "นายนราธิป เมืองศรีสุข",
+            "51705": "นายพิรภพ จันทา", "51706": "นายพิษณุ ศิริวงค์", "51744": "นายรัชชานนท์ โคตรสูงเนิน",
+            "51745": "นายรัชชานนท์ โทนุบล", "51758": "นายวิภพ ตุละรัต", "51798": "นายอนุศักดิ์ ตรีสุข",
+            "51799": "นายอนุสิทธิ์ ลัคนาลิขิต", "51800": "นายอเนชา อ่อนน้อม", "52004": "นายจิรภัทร แสงทอง",
+            "54063": "นายจักรกมล ทองมี", "54086": "นายนวพล ชูเนตร", "51857": "นางสาวณัฏฐธิดา พูลทรัพย์",
+            "51860": "นางสาวณัฐชา ยิ้มแย้ม", "51888": "นางสาวนภสร คุ้มกัน", "51909": "นางสาวปิ่นมณี แสงนิล",
+            "51965": "นางสาววรัชญา วันวาน", "51966": "นางสาววรัทยา โททอง", "52005": "นางสาวอินทิรา ศรีพึ่งจั่น",
+            "53518": "นางสาวทยิดา ษัฏเสน", "51575": "นายกษิดิ์เดช บรรทัดจันทร์", "51576": "นายกษิติดนัย ไชยพูน",
+            "51577": "นายกษิตินนท์ ไชยพูน", "51662": "นายธัชฐพัฒน์ บุญมีมา", "51742": "นายรพิพัฒน์ พันธุ์พิมาย",
+            "51764": "นายศรัญ เหนี่ยงขำ", "51783": "นายสุกฤษฎิ์ แช่มช้อย", "54091": "นายปวรปรัชญ์ ธารีพุฒ",
+            "54104": "นายภาสวิชญ์ สนเอี่ยม", "54108": "นายวชิรวิทย์ รอดสดใส"
+        };
+
+        const rosterBody = document.getElementById("student-roster");
+        Object.entries(roster).forEach(([id, name]) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td><code>${id}</code></td><td>${name}</td>`;
+            rosterBody.appendChild(tr);
+        });
+
+        // Load actual script content to display on the page
+        fetch('./obec_backend_web_app.js')
+            .then(res => res.text())
+            .then(text => {
+                document.getElementById('backend-code').textContent = text;
+            });
+
+        function copyCode(id) {
+            const code = document.getElementById(id).textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert("คัดลอกโค้ดสำเร็จ!");
+            });
+        }
+    </script>
+</body>
+</html>
