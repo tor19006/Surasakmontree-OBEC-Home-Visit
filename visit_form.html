@@ -57,21 +57,75 @@
 			font-size: 18px;
 			font-weight: bold;
 		}
-	</style>
-<script>
-		function validateFacebookInput() {
-			var facebookInput = document.getElementById('facebook');
-			// ตรวจสอบอักขระพิเศษที่อาจมีผลต่อ SQL
-			var sqlPattern = /['";\\=\-#$%^&*()<>]/;
 
-			if (sqlPattern.test(facebookInput.value)) {
-				alert('กรุณาไม่ใส่อักขระพิเศษในช่อง Facebook');
-				facebookInput.focus();
-				return false;
-			}
-			return true;
+		.form-validation-summary {
+			background: #fff7ed;
+			border: 2px solid #f97316;
+			border-radius: 8px;
+			color: #7c2d12;
+			font-family: 'Sarabun', sans-serif;
+			font-size: 16px;
+			margin: 0 auto 16px;
+			max-width: 720px;
+			padding: 12px 14px;
+			text-align: left;
 		}
-	</script>
+
+		.form-validation-summary[hidden] {
+			display: none;
+		}
+
+		.validation-title {
+			font-weight: 700;
+			margin-bottom: 4px;
+		}
+
+		.validation-hint {
+			font-size: 14px;
+			margin-bottom: 8px;
+		}
+
+		.form-validation-summary ul {
+			margin: 0;
+			padding-left: 18px;
+		}
+
+		.form-validation-summary li {
+			margin-top: 6px;
+		}
+
+		.validation-jump {
+			background: transparent;
+			border: 0;
+			color: #9a3412;
+			cursor: pointer;
+			font: inherit;
+			padding: 0;
+			text-align: left;
+			text-decoration: underline;
+		}
+
+		.field-invalid {
+			border: 2px solid #dc2626 !important;
+			box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
+			scroll-margin-top: 84px;
+		}
+
+		input[type="file"].field-invalid {
+			border-radius: 6px;
+			outline: 2px solid #dc2626;
+			outline-offset: 4px;
+		}
+
+		.field-error-message {
+			color: #b91c1c;
+			display: block;
+			font-family: 'Sarabun', sans-serif;
+			font-size: 14px;
+			font-weight: 600;
+			margin-top: 6px;
+		}
+	</style>
 </head>
 <body>
 <ul class="nav nav-tabs" style="padding: 2px;">
@@ -89,7 +143,7 @@
 </li>
 </ul>
 <div class="container-fluid" style="background-color:#E7E7E7">
-<form action="" method="post" onsubmit="return validateFacebookInput();">
+<form action="" method="post" novalidate>
 <div class="card p-3 mb-4" style="background: #eef2f6; border: 2px solid #cbd5e1; border-radius: 12px; font-family: 'Sarabun', sans-serif;">
 <h4 style="color: #1e293b; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px;">📸 อัปโหลดรูปภาพการเยี่ยมบ้าน (ภาพแนวนอนเท่านั้น)</h4>
 <div class="row">
@@ -1610,6 +1664,7 @@ this.parentNode.parentNode.style.backgroundColor=/^\d+(?:\.\d{1,2})?$/.test(this
 </div>
 <br/>
 <div align="center">
+<div aria-live="assertive" class="form-validation-summary" hidden id="validation_summary" role="alert" tabindex="-1"></div>
 <input class="btn btn-primary btn-lg" id="submit" name="submit" type="submit" value="บันทึกข้อมูล"/>
 </div>
 </form>
@@ -1853,76 +1908,184 @@ function getBase64(file) {
 
 // Intercept form submission
 const dschoolForm = document.querySelector('form');
+const validationSummary = document.getElementById('validation_summary');
 dschoolForm.removeAttribute('action');
+dschoolForm.setAttribute('novalidate', 'novalidate');
+
+function getValidationContainer(element) {
+    if (!element) return null;
+    return element.closest('.form-group, h3, .col-md-6, .col-md-3, .card-body, .card') || element;
+}
+
+function clearValidationFeedback() {
+    document.querySelectorAll('.field-invalid').forEach(function(element) {
+        element.classList.remove('field-invalid');
+        element.removeAttribute('aria-invalid');
+        if (Object.prototype.hasOwnProperty.call(element.dataset, 'originalDescribedby')) {
+            if (element.dataset.originalDescribedby) {
+                element.setAttribute('aria-describedby', element.dataset.originalDescribedby);
+            } else {
+                element.removeAttribute('aria-describedby');
+            }
+            delete element.dataset.originalDescribedby;
+        }
+    });
+
+    document.querySelectorAll('.field-error-message').forEach(function(messageElement) {
+        messageElement.remove();
+    });
+
+    if (validationSummary) {
+        validationSummary.hidden = true;
+        validationSummary.innerHTML = '';
+    }
+}
+
+function markFieldInvalid(element, message) {
+    if (!element) return;
+
+    element.classList.add('field-invalid');
+    element.setAttribute('aria-invalid', 'true');
+
+    if (!Object.prototype.hasOwnProperty.call(element.dataset, 'originalDescribedby')) {
+        element.dataset.originalDescribedby = element.getAttribute('aria-describedby') || '';
+    }
+
+    const messageId = element.id ? element.id + '_validation_error' : 'validation_error_' + Math.random().toString(36).slice(2);
+    let messageElement = document.getElementById(messageId);
+    if (!messageElement) {
+        messageElement = document.createElement('span');
+        messageElement.id = messageId;
+        messageElement.className = 'field-error-message';
+        element.insertAdjacentElement('afterend', messageElement);
+    }
+    messageElement.textContent = message;
+
+    const describedBy = [element.dataset.originalDescribedby, messageId].filter(Boolean).join(' ');
+    element.setAttribute('aria-describedby', describedBy);
+}
+
+function addValidationError(errors, element, message) {
+    markFieldInvalid(element, message);
+    errors.push({ element: element, message: message });
+}
+
+function scrollToValidationTarget(element) {
+    if (!element) return;
+
+    const target = getValidationContainer(element) || element;
+    const nav = document.querySelector('.nav-tabs');
+    const navHeight = nav ? nav.getBoundingClientRect().height : 0;
+    const targetTop = target.getBoundingClientRect().top + window.pageYOffset - navHeight - 16;
+    const scrollTop = Math.max(targetTop, 0);
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    window.scrollTo({
+        top: scrollTop,
+        behavior: prefersReducedMotion ? 'auto' : 'smooth'
+    });
+
+    setTimeout(function() {
+        const currentTop = target.getBoundingClientRect().top;
+        if (currentTop < navHeight || currentTop > window.innerHeight * 0.75) {
+            window.scrollTo(0, scrollTop);
+        }
+
+        try {
+            element.focus({ preventScroll: true });
+        } catch (focusError) {
+            try { element.focus(); } catch (ignored) {}
+        }
+    }, prefersReducedMotion ? 60 : 450);
+}
+
+function renderValidationSummary(errors) {
+    if (!validationSummary) return;
+
+    validationSummary.innerHTML = '';
+    validationSummary.hidden = errors.length === 0;
+    if (errors.length === 0) return;
+
+    const title = document.createElement('div');
+    title.className = 'validation-title';
+    title.textContent = 'กรุณาตรวจสอบข้อมูลก่อนบันทึก';
+
+    const hint = document.createElement('div');
+    hint.className = 'validation-hint';
+    hint.textContent = 'แตะรายการด้านล่างเพื่อไปยังช่องที่ต้องแก้';
+
+    const list = document.createElement('ul');
+    errors.forEach(function(error) {
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'validation-jump';
+        button.textContent = error.message;
+        button.addEventListener('click', function() {
+            scrollToValidationTarget(error.element);
+        });
+        item.appendChild(button);
+        list.appendChild(item);
+    });
+
+    validationSummary.appendChild(title);
+    validationSummary.appendChild(hint);
+    validationSummary.appendChild(list);
+}
+
 dschoolForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     // === 1. Validation with clear feedback ===
+    clearValidationFeedback();
     var errors = [];
-    var firstInvalidElement = null;
+
+    const houseInput = document.getElementById('house_image');
+    const familyInput = document.getElementById('family_image');
+    const houseFile = houseInput.files[0];
+    const familyFile = familyInput.files[0];
+    if (!houseFile) {
+        addValidationError(errors, houseInput, "กรุณาอัปโหลดรูปภาพตัวบ้าน");
+    }
+    if (!familyFile) {
+        addValidationError(errors, familyInput, "กรุณาอัปโหลดรูปภาพนักเรียนกับผู้ปกครอง");
+    }
     
     const studentSelect = document.getElementById('student_select');
     if (!studentSelect.value) {
-        errors.push("❌ กรุณาเลือกชื่อนักเรียน");
-        studentSelect.style.border = "2px solid red";
-        if (!firstInvalidElement) firstInvalidElement = studentSelect;
-    } else {
-        studentSelect.style.border = "";
+        addValidationError(errors, studentSelect, "กรุณาเลือกชื่อนักเรียน");
     }
     
     const nicknameInput = document.getElementById('nikname');
     if (nicknameInput && !nicknameInput.value.trim()) {
-        errors.push("❌ กรุณากรอกชื่อเล่น");
-        nicknameInput.style.border = "2px solid red";
-        if (!firstInvalidElement) firstInvalidElement = nicknameInput;
-    } else if (nicknameInput) {
-        nicknameInput.style.border = "";
+        addValidationError(errors, nicknameInput, "กรุณากรอกชื่อเล่น");
     }
-    
-    const houseFile = document.getElementById('house_image').files[0];
-    const familyFile = document.getElementById('family_image').files[0];
-    if (!houseFile) {
-        errors.push("📸 กรุณาอัปโหลดรูปภาพตัวบ้าน");
-        if (!firstInvalidElement) firstInvalidElement = document.getElementById('house_image');
-    }
-    if (!familyFile) {
-        errors.push("📸 กรุณาอัปโหลดรูปภาพนักเรียนกับผู้ปกครอง");
-        if (!firstInvalidElement) firstInvalidElement = document.getElementById('family_image');
+
+    const facebookInput = document.getElementById('facebook');
+    const facebookPattern = /['";\\=\-#$%^&*()<>]/;
+    if (facebookInput && facebookPattern.test(facebookInput.value)) {
+        addValidationError(errors, facebookInput, "กรุณาไม่ใส่อักขระพิเศษในช่อง Facebook");
     }
 
     const parentInput = document.getElementById('parent');
     if (parentInput && !parentInput.value.trim()) {
-        errors.push("❌ กรุณากรอกชื่อ-นามสกุลผู้ให้ข้อมูล");
-        parentInput.style.border = "2px solid red";
-        if (!firstInvalidElement) firstInvalidElement = parentInput;
-    } else if (parentInput) {
-        parentInput.style.border = "";
+        addValidationError(errors, parentInput, "กรุณากรอกชื่อ-นามสกุลผู้ให้ข้อมูล");
     }
 
     const relationSelect = document.getElementById('relation');
     if (relationSelect && !relationSelect.value) {
-        errors.push("❌ กรุณาเลือกความสัมพันธ์กับนักเรียน");
-        relationSelect.style.border = "2px solid red";
-        if (!firstInvalidElement) firstInvalidElement = relationSelect;
-    } else if (relationSelect) {
-        relationSelect.style.border = "";
+        addValidationError(errors, relationSelect, "กรุณาเลือกความสัมพันธ์กับนักเรียน");
     }
 
     const latInput = document.querySelector('input[name="latitude"]');
     const lngInput = document.querySelector('input[name="longitude"]');
-    if (!latInput.value || !lngInput.value) {
-        errors.push("📍 ยังไม่ได้ดึงพิกัด GPS — กรุณาอนุญาตตำแหน่งในเบราว์เซอร์ หรือกดปุ่มดึงพิกัดอีกครั้ง");
-        if (!firstInvalidElement) firstInvalidElement = latInput || document.getElementById('latitude');
+    if (!latInput || !lngInput || !latInput.value || !lngInput.value) {
+        addValidationError(errors, latInput || document.getElementById('latitude'), "ยังไม่ได้ดึงพิกัด GPS กรุณาอนุญาตตำแหน่งในเบราว์เซอร์ หรือกดปุ่มดึงพิกัดอีกครั้ง");
     }
     
     if (errors.length > 0) {
-        alert("⚠️ กรุณาตรวจสอบข้อมูลก่อนบันทึก:\n\n" + errors.join("\n"));
-        if (firstInvalidElement) {
-            firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(function() {
-                try { firstInvalidElement.focus(); } catch(e) {}
-            }, 500); // Wait for smooth scroll to finish
-        }
+        renderValidationSummary(errors);
+        scrollToValidationTarget(errors[0].element);
         return;
     }
     
