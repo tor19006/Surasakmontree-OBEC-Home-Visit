@@ -10,148 +10,185 @@
 
 | รายการ | สถานะ | รายละเอียด |
 |---|---|---|
-| Google Apps Script Web App | ✅ ดีพลอยแล้ว | Version ล่าสุด |
-| Web App URL (ฟอร์มนักเรียน) | ✅ พร้อมใช้งาน | [เปิดฟอร์ม](https://script.google.com/macros/s/AKfycbwnFQWes2OFB51bgXUddBzWbUfpv0WTFokMhP9dwY9XNYxF2c3z16GCNtnf9Xmt-288/exec) |
-| Google Sheets DB | ✅ เชื่อมต่อแล้ว | [เปิดชีท](https://docs.google.com/spreadsheets/d/15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo/edit) |
-| Sheet ID | `15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo` | ตั้งค่าใน Code.gs และ .env แล้ว |
-| ครูผู้บันทึกข้อมูล | ✅ กำหนดค่า default | นายเอกณัฐ  ลุผลแท้ / ครูที่ปรึกษา (readonly) |
-| อัปโหลดรูปภาพ | ✅ บังคับ 2 รูป | ภาพบ้าน + ภาพครอบครัว (แนวนอนเท่านั้น) |
-| ผู้ให้ข้อมูลนักเรียน | ✅ บังคับกรอก | placeholder: "กรุณาใส่ชื่อ-นามสกุลผู้ให้ข้อมูล" |
-| พิกัด GPS อัตโนมัติ | ⚠️ ข้อจำกัด | Google Apps Script iframe sandbox อาจบล็อก Geolocation API — ดูหัวข้อ 6 |
+| ฟอร์มเยี่ยมบ้าน (Frontend) | ✅ GitHub Pages | https://tor19006.github.io/Surasakmontree-OBEC-Home-Visit/visit_form.html |
+| Backend API | ✅ Google Apps Script | https://script.google.com/macros/s/AKfycbwnFQWes2OFB51bgXUddBzWbUfpv0WTFokMhP9dwY9XNYxF2c3z16GCNtnf9Xmt-288/exec |
+| GitHub Repository | ✅ Public | https://github.com/tor19006/Surasakmontree-OBEC-Home-Visit |
+| Google Sheets DB | ✅ เชื่อมต่อแล้ว | https://docs.google.com/spreadsheets/d/15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo/edit |
+| Sheet ID | — | `15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo` |
+| พิกัด GPS อัตโนมัติ | ✅ ทำงานได้ | Host แยกบน GitHub Pages ไม่ถูก iframe sandbox บล็อก |
 
 ---
 
 ## 🛠️ 1. สถาปัตยกรรมระบบ (System Architecture)
 
-การทำงานของระบบแบ่งออกเป็น 3 ส่วนหลัก ดังนี้:
-
 ```
-[นักเรียน/ผู้ปกครอง] 
-       │ (1. เปิด Web App URL กรอกข้อมูล & อัปโหลดรูปภาพ)
+[นักเรียน/ผู้ปกครอง]
+       │ (1. เปิด GitHub Pages URL → ดึง GPS อัตโนมัติ / คำนวณระยะทางถนนจริง)
        ▼
-[visit_form.html (Google Apps Script Web App)] 
-       │ (2. ส่งข้อมูลฟอร์ม 155 ฟิลด์ + รูปภาพ Base64 ผ่าน google.script.run)
+[visit_form.html @ GitHub Pages]
+       │ (2. fetch POST ข้อมูลฟอร์ม 155 ฟิลด์ + รูปภาพ Base64)
        ▼
-[Google Apps Script Backend (Code.gs / obec_backend_web_app.js)]
+[Google Apps Script Web App (Code.gs)]
        ├── (3. บันทึกรูปภาพ) ──> [Google Drive: โฟลเดอร์ OBEC_Home_Visit_Photos]
-       └── (4. เขียนข้อมูลแถวใหม่) ──> [Google Sheets ID: 15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo]
+       └── (4. เขียนข้อมูลแถวใหม่) ──> [Google Sheets DB (คอลัมน์ Self-healing)]
                                                │
-                                               │ (5. ดึงข้อมูลชีตคำตอบ & ดึงรูปภาพผ่าน OAuth)
+                                               │ (5. ดึงข้อมูลชีต & ดึงรูปภาพผ่าน OAuth)
                                                ▼
                                     [dschool_visit_sync.py (บอทบน WSL ของครู)]
                                                │
-                                               │ (6. ส่งเซสชันเด็ก -> ส่งรูป -> บันทึกแบบฟอร์ม 155 ฟิลด์)
+                                               │ (6. ส่งเซสชันเด็ก -> ส่งรูป -> บันทึกแบบฟอร์ม)
                                                ▼
                                     [เซิร์ฟเวอร์หลัก D-School (visit.php)]
 ```
 
 ---
 
-## 📂 2. โครงสร้างไฟล์และการจัดเก็บ (File Directory)
+## 📂 2. โครงสร้างไฟล์ (File Directory)
 
-ไฟล์ทั้งหมดที่เกี่ยวข้องกับโปรเจกต์นี้ได้รับการเก็บอยู่ในโฟลเดอร์โครงการ `/home/tor19006/dschool-weekly-report-bot/` และสำรองไว้บน Google Drive:
+โฟลเดอร์โครงการ: `/home/tor19006/dschool-weekly-report-bot/`
+GitHub: `https://github.com/tor19006/Surasakmontree-OBEC-Home-Visit`
 
-1. **`visit_form.html`** (~1,940 บรรทัด) - หน้าแบบฟอร์มหลักที่ให้เด็กกรอกข้อมูลหน้าตาเหมือน D-School ดั้งเดิม 100%
-2. **`obec_backend_web_app.js`** (208 บรรทัด) - โค้ด Apps Script สำหรับทำหน้าที่เป็น API รับข้อมูลจากฟอร์ม (ใช้วางใน `Code.gs`)
-3. **`dschool_visit_sync.py`** (316 บรรทัด) - สคริปต์ Python ในการดึงข้อมูลจากชีตมาประมวลผลและซิงค์ข้อมูลภาพ/ฟิลด์เข้า D-School
-4. **`dashboard.html`** (348 บรรทัด) - แดชบอร์ดบอกสถานะและคู่มืออย่างง่ายสำหรับเครื่อง Local ของคุณครู
-5. **`house_sample.jpg`** และ **`family_sample.jpg`** - ภาพตัวอย่างประกอบแนวนอนที่ฝังในฟอร์มในรูปแบบ Base64
-6. **`.env`** - ไฟล์เก็บคอนฟิกูเรชันความปลอดภัย พิกัดโรงเรียนสุรศักดิ์มนตรี (`13.7753, 100.5556`) และ Sheet ID
-7. **`handshake_project.md`** - เอกสารส่งมอบโครงการฉบับนี้
-
----
-
-## 🚀 3. ขั้นตอนการตั้งค่าและดีพลอย (Deployment Guide)
-
-### 3.1 การจัดเตรียมในฝั่ง Google Apps Script (Web App)
-1. เข้าสู่ **[script.google.com](https://script.google.com)** ด้วยบัญชี Google ของคุณครู
-2. สร้างโปรเจกต์ใหม่และนำโค้ดใน **`obec_backend_web_app.js`** ไปวางทับในไฟล์ `Code.gs` ทั้งหมด
-3. ตัวแปร `var SPREADSHEET_ID` ถูกตั้งค่าเชื่อมไปยังชีต `15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo` เรียบร้อยแล้ว
-4. กดปุ่ม **"+"** ข้างคำว่า Files -> เลือกประเภทไฟล์ **"HTML"** -> ตั้งชื่อว่า **`visit_form`** (ไม่ต้องใส่สกุล .html)
-5. เปิดไฟล์ **`visit_form.html`** ทำการคัดลอกโค้ดทั้งหมดไปวางทับในไฟล์ `visit_form` ที่เพิ่งสร้างใหม่นี้
-6. ทำการ **Deploy** (ปุ่มสีน้ำเงินมุมบนขวา) -> เลือก **New deployment**
-   * **Select type:** เลือกไอคอนเฟืองและเลือก **Web app**
-   * **Execute as:** เลือกเป็น **Me** (บัญชีของคุณครู)
-   * **Who has access:** เลือกเป็น **Anyone** (ทุกคน)
-7. กด Deploy และทำการกดยอมรับสิทธิ์การเข้าถึงความปลอดภัย (Authorize Access)
-8. คัดลอก **Web app URL** ส่งให้นักเรียนกรอกข้อมูลเยี่ยมบ้านได้ทันที
-
-### 3.2 URL ที่ดีพลอยแล้ว
-```
-https://script.google.com/macros/s/AKfycbwnFQWes2OFB51bgXUddBzWbUfpv0WTFokMhP9dwY9XNYxF2c3z16GCNtnf9Xmt-288/exec
-```
-
-### 3.3 การอัปเดตโค้ด
-เมื่อต้องการอัปเดตโค้ดใหม่:
-1. แก้ไขไฟล์ `Code.gs` หรือ `visit_form.html` ใน Apps Script
-2. กด **Deploy** → **Manage deployments** → คลิกไอคอนดินสอ ✏️ → เปลี่ยน Version เป็น **"New version"** → กด **Deploy**
+| ไฟล์ | ขนาด | คำอธิบาย |
+|---|---|---|
+| `visit_form.html` | ~1,940 บรรทัด | หน้าแบบฟอร์มหลัก 155 ฟิลด์ (host บน GitHub Pages) |
+| `index.html` | 10 บรรทัด | Redirect ไปยัง visit_form.html |
+| `obec_backend_web_app.js` | 208 บรรทัด | โค้ด Apps Script Backend (วางใน Code.gs) |
+| `dschool_visit_sync.py` | 316 บรรทัด | Python Bot ซิงค์ข้อมูลเข้า D-School |
+| `dashboard.html` | 348 บรรทัด | แดชบอร์ดคู่มือคุณครู |
+| `house_sample.jpg` | 823 KB | ภาพตัวอย่างบ้าน (ฝังเป็น Base64 ในฟอร์ม) |
+| `family_sample.jpg` | 918 KB | ภาพตัวอย่างครอบครัว (ฝังเป็น Base64 ในฟอร์ม) |
+| `.env` | — | คอนฟิก D-School + Sheet ID (ไม่อัปขึ้น GitHub) |
+| `handshake_project.md` | — | เอกสารส่งมอบฉบับนี้ |
 
 ---
 
-## 🐍 4. คู่มือการซิงค์ข้อมูลผ่าน Python Bot
+## 🚀 3. ขั้นตอนการดีพลอย (Deployment Guide)
 
-เมื่อมีเด็กๆ ทยอยกรอกข้อมูลและส่งรูปภาพบ้านเข้ามา ข้อมูลจะถูกเก็บเรียงแถวใน Google Sheets และเก็บไฟล์ภาพใน Drive หน้าที่ของคุณครูมีเพียงการรันบอทเพื่อโอนย้ายข้อมูลทั้งหมดเข้า D-School ของโรงเรียนโดยอัตโนมัติ
+### 3.1 ฝั่ง Google Apps Script (Backend API)
+1. เข้า **[script.google.com](https://script.google.com)** ด้วยบัญชี Google ของครู
+2. สร้างโปรเจกต์ใหม่ → วางโค้ด **`obec_backend_web_app.js`** ทับในไฟล์ `Code.gs`
+3. ตัวแปร `SPREADSHEET_ID` ถูกตั้งค่าเชื่อมชีต `15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo` แล้ว
+4. สร้างไฟล์ HTML ชื่อ **`visit_form`** → วางโค้ด `visit_form.html` (สำหรับเข้าผ่าน GAS URL โดยตรง — ทางเลือกสำรอง)
+5. Deploy → Web app → Execute as: Me → Who has access: Anyone
+6. คัดลอก Web App URL
 
-### 4.1 การตั้งค่าระบบหลังบ้านคุณครู (บน WSL)
-1. เปิดไฟล์ **`.env`** ในเครื่อง WSL (`/home/tor19006/dschool-weekly-report-bot/.env`) ยืนยันว่ามีค่า:
-   ```env
-   GOOGLE_SHEET_ID=15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo
+### 3.2 ฝั่ง GitHub Pages (Frontend หลัก)
+1. แก้ไขไฟล์ `visit_form.html` ในเครื่อง
+2. Commit & Push:
+   ```bash
+   git add -A && git commit -m "อัปเดตฟอร์ม" && git push
    ```
-2. โทเค็นความปลอดภัยของครูและพิกัดโรงเรียนสุรศักดิ์มนตรีจะถูกดึงผ่าน `gog` CLI อัตโนมัติโดยไม่จำเป็นต้องระบุ API Key ใดๆ เพิ่มเติม
+3. GitHub Pages จะอัปเดตอัตโนมัติภายใน 1-2 นาที
+4. URL: `https://tor19006.github.io/Surasakmontree-OBEC-Home-Visit/visit_form.html`
 
-### 4.2 การสั่งซิงค์ข้อมูล
-เปิด Terminal และทำการรันคำสั่ง:
-```bash
-python3 dschool_visit_sync.py
-```
-
-**ขั้นตอนการซิงค์ที่บอททำให้อัตโนมัติ:**
-1. ดึงแถวข้อมูลเยี่ยมบ้านทั้งหมดจาก Google Sheet
-2. ตรวจสอบว่าแถวใดถูกประมวลผลไปแล้ว (ใช้ Timestamp ในการแยกแยะ) เพื่อซิงค์เฉพาะแถวข้อมูลใหม่
-3. ดาวน์โหลดภาพ 2 ภาพของนักเรียนจาก Google Drive ผ่าน OAuth token ปลอดภัยสูง
-4. ทำการ Login เข้าสู่ D-School และจับคู่การบันทึกของนักเรียนรายคน
-5. ส่งภาพถ่ายบ้านและครอบครัวเข้าไปที่ uploader สารสนเทศของโรงเรียน (`savetofile.php`)
-6. กรอกและส่งคำตอบแบบฟอร์ม 155 รายการตรงเข้าเมนูหลัก สพฐ. ของ D-School
-7. บันทึกประวัติการส่งลงในไฟล์ `dschool_visit_sync_state.json` เพื่อป้องกันการส่งข้อมูลซ้ำซ้อน
+### 3.3 การอัปเดต Backend
+1. แก้ไข `Code.gs` ใน Apps Script
+2. Deploy → Manage deployments → ✏️ → New version → Deploy
 
 ---
 
-## 🔧 5. ค่า Default ที่ตั้งไว้ในฟอร์ม
+## 🔧 4. ค่า Default ที่ตั้งไว้ในฟอร์ม
 
 | ฟิลด์ | ค่า Default | สถานะ |
 |---|---|---|
-| คุณครูที่ไปเยี่ยมบ้าน (`teacher`) | นายเอกณัฐ  ลุผลแท้ | readonly (นักเรียนแก้ไขไม่ได้) |
-| ตำแหน่ง/หน้าที่ (`teacher_position`) | ครูที่ปรึกษา | readonly (นักเรียนแก้ไขไม่ได้) |
+| คุณครูที่ไปเยี่ยมบ้าน (`teacher`) | นายเอกณัฐ  ลุผลแท้ | readonly ล็อก |
+| ตำแหน่ง/หน้าที่ (`teacher_position`) | ครูที่ปรึกษา | readonly ล็อก |
+| ผู้ให้ข้อมูลนักเรียน (`parent`) | — | บังคับกรอกชื่อ-นามสกุล |
+| รูปภาพบ้าน (`house_image`) | — | บังคับอัปโหลด (แนวนอนเท่านั้น) |
+| รูปภาพครอบครัว (`family_image`) | — | บังคับอัปโหลด (แนวนอนเท่านั้น) |
 | รหัสโรงเรียน (`school_id`) | 1010126001 | hidden |
 | ภาคเรียน (`term`) | 0 | hidden |
-| สถานการณ์เยี่ยม (`visit_status`) | เยี่ยมแล้ว | checked default |
-| รูปแบบการเยี่ยม (`visit_type`) | ออนไซต์ | checked default |
+| สถานการณ์เยี่ยม (`visit_status`) | เยี่ยมแล้ว | checked |
+| รูปแบบการเยี่ยม (`visit_type`) | ออนไซต์ | checked |
 | ครั้งที่เยี่ยม (`visit_time`) | 1 | default |
 
 ---
 
-## ⚠️ 6. ข้อจำกัดที่ทราบ (Known Issues)
+## 📍 5. ระบบพิกัด GPS อัตโนมัติ
 
-### พิกัด GPS อัตโนมัติ
-Google Apps Script render หน้า HTML ภายใน **sandboxed iframe** ซึ่งมีข้อจำกัดด้าน Geolocation API — เบราว์เซอร์อาจไม่ขอ permission ตำแหน่งจากผู้ใช้โดยอัตโนมัติ
+### การทำงาน
+1. เมื่อเปิดฟอร์ม → เบราว์เซอร์ขอ permission ตำแหน่งทันที
+2. ดึงพิกัด latitude/longitude จาก Geolocation API
+3. คำนวณระยะทางถนนจริงไปโรงเรียน (ผ่าน OSRM Routing API)
+4. Fallback: คำนวณระยะทางเส้นตรง (Haversine formula)
+5. พิกัดโรงเรียนสุรศักดิ์มนตรี: `13.7753, 100.5556`
 
-**วิธีแก้ไขชั่วคราว:**
-- ฟิลด์ latitude/longitude ตั้งเป็น `readonly` + `required` — หากดึง GPS อัตโนมัติไม่ได้ จะมีปุ่ม **"📍 กดอนุญาตเพื่อดึงพิกัดตำแหน่งปัจจุบัน"** ให้กดด้วยตนเอง
-- หากยังไม่ทำงาน ให้นักเรียนใส่พิกัดจาก Google Maps ด้วยตัวเอง (ปลด readonly ผ่าน DevTools หรือเพิ่มช่องกรอกแยก)
-
-**วิธีแก้ไขถาวร (แนะนำสำหรับอนาคต):**
-- ย้ายหน้าฟอร์มไป host บน static hosting (เช่น GitHub Pages, Cloudflare Pages) แทน Google Apps Script → จะได้ full Geolocation API access
-- ใช้ Apps Script เป็น API backend อย่างเดียว (ผ่าน `doPost`)
+### เหตุผลที่ Host บน GitHub Pages
+Google Apps Script render HTML ใน sandboxed iframe ที่บล็อก Geolocation API → ย้ายฟอร์มมา host บน GitHub Pages เพื่อให้ GPS ทำงานได้เต็มรูปแบบ โดยใช้ Apps Script เป็น Backend API อย่างเดียว (ส่งข้อมูลผ่าน `fetch POST`)
 
 ---
 
-## 🛡️ 7. ข้อมูลสำคัญในการบำรุงรักษาระบบ (Maintenance & Troubleshooting)
+## 🐍 6. คู่มือซิงค์ข้อมูลผ่าน Python Bot
 
-* **ความปลอดภัยของพิกัด GPS:** การกรอกฟิลด์ GPS ถูกจำกัดให้เป็น `readonly` และดึงค่าจากอุปกรณ์ตรงๆ เพื่อความเที่ยงตรง หากเด็กเปิดฟอร์มแล้วขึ้นเตือนเบราว์เซอร์ไม่รองรับ GPS ให้แนะนำให้เด็กเปิดเข้าใช้งานฟอร์มโดยใช้ **HTTPS** (เช่น ดีพลอยผ่าน Web App URL ปลายทางของ Google Apps Script ซึ่งเป็น https อยู่แล้ว)
-* **ความปลอดภัยของภาพถ่าย:** ระบบบังคับคัดกรองให้อัปโหลดเฉพาะรูปภาพที่มีความกว้างมากกว่าความสูง (แนวนอน) เท่านั้น โดยระบบจะเช็คและบล็อกรูปแนวตั้งก่อนส่งเข้าระบบตั้งแต่แรก
-* **รูปภาพบังคับอัปโหลด 2 รูป:** ฟอร์มจะไม่ยอมส่งหากไม่อัปโหลดทั้งรูปบ้านและรูปครอบครัว (validation ฝั่ง JavaScript)
-* **เซสชันหมดอายุ:** บอทซิงค์พัฒนาขึ้นโดยเชื่อมโยงผ่าน Client API ของ D-School และ OAuth ของกูเกิลอย่างเป็นทางการ หากเกิดปัญหาการเชื่อมต่อหรือข้อมูลไม่ซิงค์ ให้รันเช็คสิทธิ์ด้วยคำสั่ง:
+### 6.1 ตั้งค่าบน WSL
+ยืนยันว่าไฟล์ `.env` (`/home/tor19006/dschool-weekly-report-bot/.env`) มีค่า:
+```env
+GOOGLE_SHEET_ID=15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo
+```
+
+### 6.2 สั่งซิงค์
+```bash
+python3 dschool_visit_sync.py
+```
+
+### 6.3 ขั้นตอนอัตโนมัติของบอท
+1. ดึงแถวข้อมูลจาก Google Sheet
+2. ตรวจสอบ Timestamp → ซิงค์เฉพาะแถวใหม่
+3. ดาวน์โหลดภาพ 2 รูปจาก Google Drive (OAuth)
+4. Login เข้า D-School → จับคู่นักเรียนรายคน
+5. อัปโหลดภาพไปที่ `savetofile.php`
+6. ส่งฟอร์ม 155 ฟิลด์ไปที่ `visit.php`
+7. บันทึกสถานะลง `dschool_visit_sync_state.json`
+
+---
+
+## 🛡️ 7. การบำรุงรักษา (Maintenance & Troubleshooting)
+
+* **GPS ไม่ทำงาน:** ตรวจสอบว่านักเรียนเปิด URL ของ GitHub Pages (ไม่ใช่ URL ของ Google Apps Script) และอนุญาต permission ตำแหน่งในเบราว์เซอร์
+* **ภาพถ่าย:** ระบบบังคับอัปโหลดรูปแนวนอน (กว้าง > สูง) เท่านั้น — ระบบจะบล็อกรูปแนวตั้งอัตโนมัติ
+* **ภาพบังคับ 2 รูป:** ฟอร์มไม่ยอมส่งหากไม่อัปโหลดทั้งรูปบ้านและรูปครอบครัว
+* **เซสชัน D-School หมดอายุ:** รันเช็คสิทธิ์:
   ```bash
   GOG_KEYRING_PASSWORD=tp121158 gog status
   ```
-  *(เพื่อยืนยันสถานะล็อกอิน หรือใช้แดชบอร์ด `dashboard.html` ในการตรวจสอบระบบ)*
+* **อัปเดตฟอร์ม:** แก้ไข `visit_form.html` → `git add -A && git commit -m "..." && git push` → GitHub Pages อัปเดตอัตโนมัติ
+* **อัปเดต Backend:** แก้ `Code.gs` ใน Apps Script → Deploy → Manage deployments → New version
+
+---
+
+## 📋 8. รายชื่อนักเรียน ม.5/12 (32 คน)
+
+| ลำดับ | รหัส | ชื่อ-นามสกุล |
+|---|---|---|
+| 1 | 51655 | นายธนพงษ์ นาเอก |
+| 2 | 51666 | นายนนทวัฒน์ โอรทัต |
+| 3 | 51669 | นายนราธิป เมืองศรีสุข |
+| 4 | 51705 | นายพิรภพ จันทา |
+| 5 | 51706 | นายพิษณุ ศิริวงค์ |
+| 6 | 51744 | นายรัชชานนท์ โคตรสูงเนิน |
+| 7 | 51745 | นายรัชชานนท์ โทนุบล |
+| 8 | 51758 | นายวิภพ ตุละรัต |
+| 9 | 51798 | นายอนุศักดิ์ ตรีสุข |
+| 10 | 51799 | นายอนุสิทธิ์ ลัคนาลิขิต |
+| 11 | 51800 | นายอเนชา อ่อนน้อม |
+| 12 | 52004 | นายจิรภัทร แสงทอง |
+| 13 | 54063 | นายจักรกมล ทองมี |
+| 14 | 54086 | นายนวพล ชูเนตร |
+| 15 | 51857 | นางสาวณัฏฐธิดา พูลทรัพย์ |
+| 16 | 51860 | นางสาวณัฐชา ยิ้มแย้ม |
+| 17 | 51888 | นางสาวนภสร คุ้มกัน |
+| 18 | 51909 | นางสาวปิ่นมณี แสงนิล |
+| 19 | 51965 | นางสาววรัชญา วันวาน |
+| 20 | 51966 | นางสาววรัทยา โททอง |
+| 21 | 52005 | นางสาวอินทิรา ศรีพึ่งจั่น |
+| 22 | 53518 | นางสาวทยิดา ษัฏเสน |
+| 23 | 51575 | นายกษิดิ์เดช บรรทัดจันทร์ |
+| 24 | 51576 | นายกษิติดนัย ไชยพูน |
+| 25 | 51577 | นายกษิตินนท์ ไชยพูน |
+| 26 | 51662 | นายธัชฐพัฒน์ บุญมีมา |
+| 27 | 51742 | นายรพิพัฒน์ พันธุ์พิมาย |
+| 28 | 51764 | นายศรัญ เหนี่ยงขำ |
+| 29 | 51783 | นายสุกฤษฎิ์ แช่มช้อย |
+| 30 | 54091 | นายปวรปรัชญ์ ธารีพุฒ |
+| 31 | 54104 | นายภาสวิชญ์ สนเอี่ยม |
+| 32 | 54108 | นายวชิรวิทย์ รอดสดใส |
