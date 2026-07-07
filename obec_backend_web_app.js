@@ -17,7 +17,7 @@
  * 10. Paste the copied Web app URL into the `visit_form.html` file (replacing "REPLACE_WITH_WEB_APP_URL" on line ~js).
  */
 
-var SPREADSHEET_ID = "15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo"; // Linked to OBEC Home Visit Sheet
+var SPREADSHEET_ID = "1gL_qBY5ksUruQ8ROdxgarlJuVKrV0hZKEfUs9x3RJPo"; // Linked to OBEC Home Visit Sheet
 
 function doPost(e) {
   try {
@@ -123,16 +123,49 @@ function saveBase64File(base64Data, filename, folder) {
 // Run this once from the Apps Script editor after deploying/updating code.
 // It forces Google to ask for the Spreadsheet and Drive permissions used by submissions.
 function authorizeRequiredServices() {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var runnerEmail = getRunnerEmail_();
+  var ss;
+
+  try {
+    ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  } catch (error) {
+    throw new Error(
+      "เปิด Google Sheet ไม่ได้: บัญชีที่กำลังรัน Apps Script ยังไม่มีสิทธิ์เข้าถึงชีตนี้\n" +
+      "บัญชีที่รันอยู่: " + runnerEmail + "\n" +
+      "Sheet ID: " + SPREADSHEET_ID + "\n\n" +
+      "วิธีแก้: เปิด Google Sheet นี้ แล้วกด Share ให้บัญชีด้านบนเป็น Editor จากนั้นกลับมากด Run ฟังก์ชัน authorizeRequiredServices อีกครั้ง\n" +
+      "รายละเอียดจาก Google: " + error.message
+    );
+  }
+
   var folderName = "OBEC_Home_Visit_Photos";
-  var folders = DriveApp.getFoldersByName(folderName);
-  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  var folder;
+
+  try {
+    var folders = DriveApp.getFoldersByName(folderName);
+    folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  } catch (error) {
+    throw new Error(
+      "เข้าถึง Google Drive ไม่ได้: กรุณากดอนุญาตสิทธิ์ Google Drive ให้ Apps Script\n" +
+      "บัญชีที่รันอยู่: " + runnerEmail + "\n" +
+      "รายละเอียดจาก Google: " + error.message
+    );
+  }
   
   return {
     status: "success",
+    runnerEmail: runnerEmail,
     spreadsheetName: ss.getName(),
     folderName: folder.getName()
   };
+}
+
+function getRunnerEmail_() {
+  try {
+    return Session.getEffectiveUser().getEmail() || Session.getActiveUser().getEmail() || "(ไม่สามารถอ่านอีเมลบัญชีที่รันได้)";
+  } catch (error) {
+    return "(ไม่สามารถอ่านอีเมลบัญชีที่รันได้)";
+  }
 }
 
 // Serve the visit_form.html page on GET request

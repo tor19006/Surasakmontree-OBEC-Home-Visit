@@ -13,8 +13,8 @@
 | ฟอร์มเยี่ยมบ้าน (Frontend) | ✅ GitHub Pages | https://tor19006.github.io/Surasakmontree-OBEC-Home-Visit/visit_form.html |
 | Backend API | ✅ Google Apps Script | https://script.google.com/macros/s/AKfycbwnFQWes2OFB51bgXUddBzWbUfpv0WTFokMhP9dwY9XNYxF2c3z16GCNtnf9Xmt-288/exec |
 | GitHub Repository | ✅ Public | https://github.com/tor19006/Surasakmontree-OBEC-Home-Visit |
-| Google Sheets DB | ✅ เชื่อมต่อแล้ว | https://docs.google.com/spreadsheets/d/15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo/edit |
-| Sheet ID | — | `15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo` |
+| Google Sheets DB | ✅ เชื่อมต่อแล้ว | https://docs.google.com/spreadsheets/d/1gL_qBY5ksUruQ8ROdxgarlJuVKrV0hZKEfUs9x3RJPo/edit |
+| Sheet ID | — | `1gL_qBY5ksUruQ8ROdxgarlJuVKrV0hZKEfUs9x3RJPo` |
 | พิกัด GPS อัตโนมัติ | ⚠️ ยังแก้ไม่ได้บน URL ของ GAS (ต้องใช้ GitHub Pages) | หากเปิดผ่าน Google Apps Script Web App ตรงๆ ระบบจะบล็อกสิทธิ์ GPS เสมอ (ยังแก้ไม่ได้เนื่องจากเป็นข้อจำกัด iframe sandbox ของ Google) ต้องใช้ลิงก์ GitHub Pages เท่านั้น |
 
 ---
@@ -61,7 +61,7 @@ GitHub: `https://github.com/tor19006/Surasakmontree-OBEC-Home-Visit`
 ### 3.1 ฝั่ง Google Apps Script (Backend API)
 1. เข้า **[script.google.com](https://script.google.com)** ด้วยบัญชี Google ของครู
 2. สร้างโปรเจกต์ใหม่ → วางโค้ด **`obec_backend_web_app.js`** ทับในไฟล์ `Code.gs`
-3. ตัวแปร `SPREADSHEET_ID` ถูกตั้งค่าเชื่อมชีต `15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo` แล้ว
+3. ตัวแปร `SPREADSHEET_ID` ถูกตั้งค่าเชื่อมชีต `1gL_qBY5ksUruQ8ROdxgarlJuVKrV0hZKEfUs9x3RJPo` แล้ว
 4. สร้างไฟล์ HTML ชื่อ **`visit_form`** → วางโค้ด `visit_form.html` (สำหรับเข้าผ่าน GAS URL โดยตรง — ทางเลือกสำรอง)
 5. Deploy → Web app → Execute as: Me → Who has access: Anyone
 6. คัดลอก Web App URL
