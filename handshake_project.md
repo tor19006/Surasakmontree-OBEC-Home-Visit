@@ -15,7 +15,7 @@
 | GitHub Repository | ✅ Public | https://github.com/tor19006/Surasakmontree-OBEC-Home-Visit |
 | Google Sheets DB | ✅ เชื่อมต่อแล้ว | https://docs.google.com/spreadsheets/d/15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo/edit |
 | Sheet ID | — | `15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo` |
-| พิกัด GPS อัตโนมัติ | ✅ ทำงานได้ | Host แยกบน GitHub Pages ไม่ถูก iframe sandbox บล็อก |
+| พิกัด GPS อัตโนมัติ | ⚠️ ยังแก้ไม่ได้บน URL ของ GAS (ต้องใช้ GitHub Pages) | หากเปิดผ่าน Google Apps Script Web App ตรงๆ ระบบจะบล็อกสิทธิ์ GPS เสมอ (ยังแก้ไม่ได้เนื่องจากเป็นข้อจำกัด iframe sandbox ของ Google) ต้องใช้ลิงก์ GitHub Pages เท่านั้น |
 
 ---
 
@@ -107,8 +107,10 @@ GitHub: `https://github.com/tor19006/Surasakmontree-OBEC-Home-Visit`
 4. Fallback: คำนวณระยะทางเส้นตรง (Haversine formula)
 5. พิกัดโรงเรียนสุรศักดิ์มนตรี: `13.7753, 100.5556`
 
-### เหตุผลที่ Host บน GitHub Pages
-Google Apps Script render HTML ใน sandboxed iframe ที่บล็อก Geolocation API → ย้ายฟอร์มมา host บน GitHub Pages เพื่อให้ GPS ทำงานได้เต็มรูปแบบ โดยใช้ Apps Script เป็น Backend API อย่างเดียว (ส่งข้อมูลผ่าน `fetch POST`)
+### ข้อจำกัดที่ยังแก้ไขไม่ได้บน URL ของ Google Apps Script
+การเข้าใช้งานฟอร์มผ่าน URL ของ Google Apps Script Web App โดยตรง **ยังไม่สามารถแก้ปัญหาระบบขอพิกัด GPS อัตโนมัติได้** เนื่องจาก Google บังคับให้หน้าเว็บแสดงผลภายใต้ `iframe` ที่ติดค่าความปลอดภัยระดับสูง (`sandbox`) ซึ่งปิดกั้นการเข้าถึง Geolocation API ในทุกกรณี
+
+**วิธีแก้ไข:** ย้ายหน้าเว็บแบบฟอร์ม (Frontend) มาเปิดผ่านบริการภายนอกอย่าง **GitHub Pages** แทน ส่วนตัว Google Apps Script จะใช้เป็นตัวรับส่งข้อมูลเบื้องหลัง (Backend API) เท่านั้น เพื่อให้นักเรียนเข้าเปิดผ่านลิงก์ของ GitHub Pages แล้วมีระบบขอสิทธิ์ดึงพิกัด GPS ทำงานได้อย่างสมบูรณ์แบบ 100%
 
 ---
 
