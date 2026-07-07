@@ -1859,11 +1859,13 @@ dschoolForm.addEventListener('submit', async function(e) {
     
     // === 1. Validation with clear feedback ===
     var errors = [];
+    var firstInvalidElement = null;
     
     const studentSelect = document.getElementById('student_select');
     if (!studentSelect.value) {
         errors.push("❌ กรุณาเลือกชื่อนักเรียน");
         studentSelect.style.border = "2px solid red";
+        if (!firstInvalidElement) firstInvalidElement = studentSelect;
     } else {
         studentSelect.style.border = "";
     }
@@ -1872,19 +1874,27 @@ dschoolForm.addEventListener('submit', async function(e) {
     if (nicknameInput && !nicknameInput.value.trim()) {
         errors.push("❌ กรุณากรอกชื่อเล่น");
         nicknameInput.style.border = "2px solid red";
+        if (!firstInvalidElement) firstInvalidElement = nicknameInput;
     } else if (nicknameInput) {
         nicknameInput.style.border = "";
     }
     
     const houseFile = document.getElementById('house_image').files[0];
     const familyFile = document.getElementById('family_image').files[0];
-    if (!houseFile) errors.push("📸 กรุณาอัปโหลดรูปภาพตัวบ้าน");
-    if (!familyFile) errors.push("📸 กรุณาอัปโหลดรูปภาพนักเรียนกับผู้ปกครอง");
+    if (!houseFile) {
+        errors.push("📸 กรุณาอัปโหลดรูปภาพตัวบ้าน");
+        if (!firstInvalidElement) firstInvalidElement = document.getElementById('house_image');
+    }
+    if (!familyFile) {
+        errors.push("📸 กรุณาอัปโหลดรูปภาพนักเรียนกับผู้ปกครอง");
+        if (!firstInvalidElement) firstInvalidElement = document.getElementById('family_image');
+    }
 
     const parentInput = document.getElementById('parent');
     if (parentInput && !parentInput.value.trim()) {
         errors.push("❌ กรุณากรอกชื่อ-นามสกุลผู้ให้ข้อมูล");
         parentInput.style.border = "2px solid red";
+        if (!firstInvalidElement) firstInvalidElement = parentInput;
     } else if (parentInput) {
         parentInput.style.border = "";
     }
@@ -1893,6 +1903,7 @@ dschoolForm.addEventListener('submit', async function(e) {
     if (relationSelect && !relationSelect.value) {
         errors.push("❌ กรุณาเลือกความสัมพันธ์กับนักเรียน");
         relationSelect.style.border = "2px solid red";
+        if (!firstInvalidElement) firstInvalidElement = relationSelect;
     } else if (relationSelect) {
         relationSelect.style.border = "";
     }
@@ -1901,10 +1912,17 @@ dschoolForm.addEventListener('submit', async function(e) {
     const lngInput = document.querySelector('input[name="longitude"]');
     if (!latInput.value || !lngInput.value) {
         errors.push("📍 ยังไม่ได้ดึงพิกัด GPS — กรุณาอนุญาตตำแหน่งในเบราว์เซอร์ หรือกดปุ่มดึงพิกัดอีกครั้ง");
+        if (!firstInvalidElement) firstInvalidElement = latInput || document.getElementById('latitude');
     }
     
     if (errors.length > 0) {
         alert("⚠️ กรุณาตรวจสอบข้อมูลก่อนบันทึก:\n\n" + errors.join("\n"));
+        if (firstInvalidElement) {
+            firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(function() {
+                try { firstInvalidElement.focus(); } catch(e) {}
+            }, 500); // Wait for smooth scroll to finish
+        }
         return;
     }
     
