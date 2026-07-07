@@ -1851,23 +1851,62 @@ dschoolForm.removeAttribute('action');
 dschoolForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    // === 1. Validation with clear feedback ===
+    var errors = [];
+    
     const studentSelect = document.getElementById('student_select');
     if (!studentSelect.value) {
-        alert("กรุณาเลือกชื่อนักเรียน!");
-        return;
+        errors.push("❌ กรุณาเลือกชื่อนักเรียน");
+        studentSelect.style.border = "2px solid red";
+    } else {
+        studentSelect.style.border = "";
+    }
+    
+    const nicknameInput = document.getElementById('nikname');
+    if (nicknameInput && !nicknameInput.value.trim()) {
+        errors.push("❌ กรุณากรอกชื่อเล่น");
+        nicknameInput.style.border = "2px solid red";
+    } else if (nicknameInput) {
+        nicknameInput.style.border = "";
     }
     
     const houseFile = document.getElementById('house_image').files[0];
     const familyFile = document.getElementById('family_image').files[0];
+    if (!houseFile) errors.push("📸 กรุณาอัปโหลดรูปภาพตัวบ้าน");
+    if (!familyFile) errors.push("📸 กรุณาอัปโหลดรูปภาพนักเรียนกับผู้ปกครอง");
+
+    const parentInput = document.getElementById('parent');
+    if (parentInput && !parentInput.value.trim()) {
+        errors.push("❌ กรุณากรอกชื่อ-นามสกุลผู้ให้ข้อมูล");
+        parentInput.style.border = "2px solid red";
+    } else if (parentInput) {
+        parentInput.style.border = "";
+    }
+
+    const relationSelect = document.getElementById('relation');
+    if (relationSelect && !relationSelect.value) {
+        errors.push("❌ กรุณาเลือกความสัมพันธ์กับนักเรียน");
+        relationSelect.style.border = "2px solid red";
+    } else if (relationSelect) {
+        relationSelect.style.border = "";
+    }
+
+    const latInput = document.querySelector('input[name="latitude"]');
+    const lngInput = document.querySelector('input[name="longitude"]');
+    if (!latInput.value || !lngInput.value) {
+        errors.push("📍 ยังไม่ได้ดึงพิกัด GPS — กรุณาอนุญาตตำแหน่งในเบราว์เซอร์ หรือกดปุ่มดึงพิกัดอีกครั้ง");
+    }
     
-    if (!houseFile || !familyFile) {
-        alert("กรุณาอัปโหลดรูปภาพให้ครบทั้ง 2 รูป!");
+    if (errors.length > 0) {
+        alert("⚠️ กรุณาตรวจสอบข้อมูลก่อนบันทึก:\n\n" + errors.join("\n"));
         return;
     }
     
+    // === 2. Show loading state ===
     const submitBtn = document.querySelector('input[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.value = "⏳ กำลังบันทึกข้อมูล กรุณารอครู่...";
+    submitBtn.style.backgroundColor = "#f59e0b";
     
     try {
         const houseBase64 = await getBase64(houseFile);
@@ -1877,7 +1916,6 @@ dschoolForm.addEventListener('submit', async function(e) {
         const formData = new FormData(dschoolForm);
         const data = {};
         formData.forEach((value, key) => {
-            // Support multiple checkbox values if they have same key
             if (data[key]) {
                 if (!Array.isArray(data[key])) {
                     data[key] = [data[key]];
@@ -1905,42 +1943,53 @@ dschoolForm.addEventListener('submit', async function(e) {
                         alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + res.message);
                         submitBtn.disabled = false;
                         submitBtn.value = "บันทึกข้อมูล";
+                        submitBtn.style.backgroundColor = "";
                     }
                 })
                 .withFailureHandler(function(err) {
                     alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: " + err.message);
                     submitBtn.disabled = false;
                     submitBtn.value = "บันทึกข้อมูล";
+                    submitBtn.style.backgroundColor = "";
                 })
                 .saveFormData(data);
         } else {
-            // Fallback for standalone API fetch (local file or external hosting)
+            // External hosting mode — POST to Google Apps Script Web App
             const webAppUrl = "https://script.google.com/macros/s/AKfycbwnFQWes2OFB51bgXUddBzWbUfpv0WTFokMhP9dwY9XNYxF2c3z16GCNtnf9Xmt-288/exec";
-            if (webAppUrl === "REPLACE_WITH_WEB_APP_URL") {
-                alert("⚠️ ยังไม่ได้กำหนดค่า URL ของ Google Apps Script Web App! (กรุณาอัปเดต URL ในไฟล์ visit_form.html)");
-                submitBtn.disabled = false;
-                submitBtn.value = "บันทึกข้อมูล";
-                return;
-            }
+            
+            submitBtn.value = "📤 กำลังส่งข้อมูลไปยังเซิร์ฟเวอร์...";
             
             const response = await fetch(webAppUrl, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(data)
             });
             
-            alert("🎉 บันทึกข้อมูลการเยี่ยมบ้านและรูปภาพประกอบเรียบร้อยแล้ว!");
-            location.reload();
+            if (response.ok || response.type === 'opaque' || response.type === 'cors') {
+                let result = null;
+                try { result = await response.json(); } catch(e) {}
+                
+                if (result && result.status === "error") {
+                    alert("❌ เซิร์ฟเวอร์แจ้งข้อผิดพลาด: " + result.message);
+                    submitBtn.disabled = false;
+                    submitBtn.value = "บันทึกข้อมูล";
+                    submitBtn.style.backgroundColor = "";
+                } else {
+                    alert("🎉 บันทึกข้อมูลการเยี่ยมบ้านและรูปภาพประกอบเรียบร้อยแล้ว!\n\nข้อมูลถูกส่งไปยัง Google Sheets เรียบร้อย");
+                    location.reload();
+                }
+            } else {
+                throw new Error("เซิร์ฟเวอร์ตอบกลับ HTTP " + response.status);
+            }
         }
         
     } catch (err) {
         console.error(err);
-        alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + err.message);
+        alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล:\n\n" + err.message + "\n\nกรุณาลองอีกครั้ง หรือแจ้งคุณครู");
         submitBtn.disabled = false;
         submitBtn.value = "บันทึกข้อมูล";
+        submitBtn.style.backgroundColor = "";
     }
 });
 </script>
