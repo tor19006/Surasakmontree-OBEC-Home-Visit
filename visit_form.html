@@ -117,6 +117,23 @@
 			outline-offset: 4px;
 		}
 
+		input[type="radio"].field-invalid,
+		input[type="checkbox"].field-invalid {
+			outline: 2px solid #dc2626;
+			outline-offset: 3px;
+		}
+
+		.choice-group-invalid {
+			background: #fef2f2;
+			border-radius: 6px;
+			padding: 2px 6px;
+		}
+
+		.choice-group-invalid label {
+			color: #991b1b;
+			font-weight: 600;
+		}
+
 		.field-error-message {
 			color: #b91c1c;
 			display: block;
@@ -1914,7 +1931,7 @@ dschoolForm.setAttribute('novalidate', 'novalidate');
 
 function getValidationContainer(element) {
     if (!element) return null;
-    return element.closest('.form-group, h3, .col-md-6, .col-md-3, .card-body, .card') || element;
+    return element.closest('tr, .form-group, h3, h4, .col-md-6, .col-md-4, .col-md-3, .card-body, .card') || element;
 }
 
 function clearValidationFeedback() {
@@ -1933,6 +1950,10 @@ function clearValidationFeedback() {
 
     document.querySelectorAll('.field-error-message').forEach(function(messageElement) {
         messageElement.remove();
+    });
+
+    document.querySelectorAll('.choice-group-invalid').forEach(function(element) {
+        element.classList.remove('choice-group-invalid');
     });
 
     if (validationSummary) {
@@ -1968,6 +1989,99 @@ function markFieldInvalid(element, message) {
 function addValidationError(errors, element, message) {
     markFieldInvalid(element, message);
     errors.push({ element: element, message: message });
+}
+
+function validateRequiredInput(errors, inputId, message) {
+    const input = document.getElementById(inputId);
+    if (input && !String(input.value || '').trim()) {
+        addValidationError(errors, input, message);
+    }
+}
+
+function isElementVisible(element) {
+    if (!element) return false;
+    const style = window.getComputedStyle(element);
+    return style.display !== 'none' && style.visibility !== 'hidden' && element.getClientRects().length > 0;
+}
+
+function findChoiceGroupAnchor(firstInput) {
+    if (!firstInput) return null;
+
+    const ownCardHeader = firstInput.closest('.card-header');
+    if (ownCardHeader) {
+        return ownCardHeader;
+    }
+
+    const tableRow = firstInput.closest('tr');
+    if (tableRow) {
+        return tableRow.querySelector('th') || tableRow;
+    }
+
+    let element = firstInput;
+    while (element && element !== dschoolForm) {
+        let previous = element.previousElementSibling;
+        while (previous) {
+            if (previous.matches && previous.matches('h4, .card-header, .h4, label')) {
+                return previous;
+            }
+
+            if (previous.querySelector) {
+                const heading = previous.querySelector('h4, .card-header, .h4, label');
+                if (heading) return heading;
+            }
+            previous = previous.previousElementSibling;
+        }
+        element = element.parentElement;
+    }
+
+    const card = firstInput.closest('.card');
+    return (card && card.querySelector('.card-header')) || getValidationContainer(firstInput) || firstInput;
+}
+
+function addChoiceGroupError(errors, groupNames, message) {
+    const names = Array.isArray(groupNames) ? groupNames : [groupNames];
+    const inputs = [];
+    names.forEach(function(name) {
+        Array.from(dschoolForm.querySelectorAll('input[name="' + name + '"]')).forEach(function(input) {
+            if (isElementVisible(input)) {
+                inputs.push(input);
+            }
+        });
+    });
+
+    if (!inputs.length || inputs.some(function(input) { return input.checked; })) return;
+
+    const firstInput = inputs[0];
+    const anchor = findChoiceGroupAnchor(firstInput);
+    const messageId = 'choice_validation_' + names.join('_').replace(/[^a-zA-Z0-9_-]/g, '_');
+    let messageElement = document.getElementById(messageId);
+
+    if (!messageElement) {
+        messageElement = document.createElement('span');
+        messageElement.id = messageId;
+        messageElement.className = 'field-error-message';
+        (anchor || firstInput).insertAdjacentElement('afterend', messageElement);
+    }
+    messageElement.textContent = message;
+
+    inputs.forEach(function(input) {
+        input.classList.add('field-invalid');
+        input.setAttribute('aria-invalid', 'true');
+
+        if (!Object.prototype.hasOwnProperty.call(input.dataset, 'originalDescribedby')) {
+            input.dataset.originalDescribedby = input.getAttribute('aria-describedby') || '';
+        }
+
+        const describedBy = [input.dataset.originalDescribedby, messageId].filter(Boolean).join(' ');
+        input.setAttribute('aria-describedby', describedBy);
+
+        const choiceWrapper = input.closest('.icheck-primary') || input.closest('td');
+        if (choiceWrapper) {
+            choiceWrapper.classList.add('choice-group-invalid');
+        }
+    });
+
+    errors.push({ element: firstInput, message: message });
 }
 
 function scrollToValidationTarget(element) {
@@ -2061,11 +2175,39 @@ dschoolForm.addEventListener('submit', async function(e) {
         addValidationError(errors, nicknameInput, "กรุณากรอกชื่อเล่น");
     }
 
+    validateRequiredInput(errors, 'mobile', "กรุณากรอกเบอร์โทรศัพท์");
+
     const facebookInput = document.getElementById('facebook');
     const facebookPattern = /['";\\=\-#$%^&*()<>]/;
     if (facebookInput && facebookPattern.test(facebookInput.value)) {
         addValidationError(errors, facebookInput, "กรุณาไม่ใส่อักขระพิเศษในช่อง Facebook");
     }
+
+    addChoiceGroupError(errors, 'a1', "กรุณาเลือกประเภทบ้านที่อาศัย");
+    validateRequiredInput(errors, 'a2t1', "กรุณากรอกระยะทางบ้านไปโรงเรียน");
+    validateRequiredInput(errors, 'a2t2', "กรุณากรอกเวลาเดินทาง");
+    addChoiceGroupError(errors, 'a3', "กรุณาเลือกการเดินทางของนักเรียนไปโรงเรียน");
+    addChoiceGroupError(errors, 'a41', "กรุณาเลือกสภาพตัวบ้าน");
+    addChoiceGroupError(errors, 'a42', "กรุณาเลือกความสะอาดของบ้าน");
+    addChoiceGroupError(errors, 'a431', "กรุณาเลือกว่าไฟฟ้ามีหรือไม่มี");
+    addChoiceGroupError(errors, 'a432', "กรุณาเลือกว่าใช้น้ำเพื่ออุปโภค/บริโภคมีหรือไม่มี");
+    addChoiceGroupError(errors, 'a433', "กรุณาเลือกว่าใช้ห้องสุขามีหรือไม่มี");
+    addChoiceGroupError(errors, 'fm_info', "กรุณาเลือกข้อมูลครอบครัวของนักเรียน");
+    validateRequiredInput(errors, 'b11t', "กรุณากรอกจำนวนสมาชิกในครอบครัวทั้งหมด");
+    addChoiceGroupError(errors, 'b4', "กรุณาเลือกความสัมพันธ์ของสมาชิกในครอบครัว");
+    validateRequiredInput(errors, 'b42t', "กรุณากรอกจำนวนชั่วโมงที่อยู่ร่วมกันต่อวัน");
+    validateRequiredInput(errors, 'b43t', "กรุณากรอกภาระงานความรับผิดชอบของนักเรียนต่อครอบครัว");
+    validateRequiredInput(errors, 'b44t', "กรุณากรอกกิจกรรมยามว่างหรืองานอดิเรก");
+    validateRequiredInput(errors, 'b45t', "กรุณากรอกผู้ดูแลนักเรียนเมื่อผู้ปกครองไม่อยู่บ้าน");
+    validateRequiredInput(errors, 'b51t', "กรุณากรอกรายได้เฉลี่ยของครอบครัวต่อเดือน");
+    validateRequiredInput(errors, 'b52t', "กรุณากรอกว่านักเรียนได้รับค่าใช้จ่ายจากใคร");
+    validateRequiredInput(errors, 'b55t', "กรุณากรอกจำนวนเงินที่นักเรียนได้รับมาโรงเรียนต่อวัน");
+    addChoiceGroupError(errors, 'b6x11', "กรุณาเลือกการเข้าถึงอินเทอร์เน็ตจากที่อยู่อาศัย");
+    addChoiceGroupError(errors, 'b6x12', "กรุณาเลือกการใช้เครื่องมือสื่อสารอิเล็กทรอนิกส์");
+    addChoiceGroupError(errors, 'risky_academic', "กรุณาเลือกข้อมูลด้านการเรียน");
+    validateRequiredInput(errors, 'b7t', "กรุณากรอกข้อห่วงใยของผู้ปกครองที่มีต่อนักเรียน");
+    addChoiceGroupError(errors, 'b8', "กรุณาเลือกสิ่งที่ผู้ปกครองต้องการให้โรงเรียนช่วยเหลือนักเรียน");
+    addChoiceGroupError(errors, 'b9', "กรุณาเลือกระดับความช่วยเหลือที่ครอบครัวเคยได้รับหรือต้องการได้รับ");
 
     const parentInput = document.getElementById('parent');
     if (parentInput && !parentInput.value.trim()) {
