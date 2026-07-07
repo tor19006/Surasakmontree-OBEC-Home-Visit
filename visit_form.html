@@ -3,6 +3,12 @@
 
 <html lang="en">
 <head>
+<script>
+    window.onerror = function(message, source, lineno, colno, error) {
+        alert("⚠️ เกิดข้อผิดพลาดของระบบ (JavaScript Error):\n\n" + message + "\n\nไฟล์: " + source + "\nบรรทัด: " + lineno + (colno ? "\nคอลัมน์: " + colno : "") + (error ? "\nรายละเอียด: " + error.stack : ""));
+        return false;
+    };
+</script>
 <title>บันทึกการเยี่ยมบ้าน</title>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
