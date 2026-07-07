@@ -1,2 +1,7 @@
 .DS_Store
 .env
+*.py
+*.json
+*.log
+node_modules/
+dist/

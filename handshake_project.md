@@ -32,11 +32,7 @@
        ├── (3. บันทึกรูปภาพ) ──> [Google Drive: โฟลเดอร์ OBEC_Home_Visit_Photos]
        └── (4. เขียนข้อมูลแถวใหม่) ──> [Google Sheets DB (คอลัมน์ Self-healing)]
                                                │
-                                               │ (5. ดึงข้อมูลชีต & ดึงรูปภาพผ่าน OAuth)
-                                               ▼
-                                    [dschool_visit_sync.py (บอทบน WSL ของครู)]
-                                               │
-                                               │ (6. ส่งเซสชันเด็ก -> ส่งรูป -> บันทึกแบบฟอร์ม)
+                                               │ (5. ดึงข้อมูลชีต & ดึงรูปภาพเพื่อส่งต่อเข้า D-School)
                                                ▼
                                     [เซิร์ฟเวอร์หลัก D-School (visit.php)]
 ```
@@ -45,7 +41,6 @@
 
 ## 📂 2. โครงสร้างไฟล์ (File Directory)
 
-โฟลเดอร์โครงการ: `/home/tor19006/dschool-weekly-report-bot/`
 GitHub: `https://github.com/tor19006/Surasakmontree-OBEC-Home-Visit`
 
 | ไฟล์ | ขนาด | คำอธิบาย |
@@ -53,7 +48,6 @@ GitHub: `https://github.com/tor19006/Surasakmontree-OBEC-Home-Visit`
 | `visit_form.html` | ~1,940 บรรทัด | หน้าแบบฟอร์มหลัก 155 ฟิลด์ (host บน GitHub Pages) |
 | `index.html` | 10 บรรทัด | Redirect ไปยัง visit_form.html |
 | `obec_backend_web_app.js` | 208 บรรทัด | โค้ด Apps Script Backend (วางใน Code.gs) |
-| `dschool_visit_sync.py` | 316 บรรทัด | Python Bot ซิงค์ข้อมูลเข้า D-School |
 | `dashboard.html` | 348 บรรทัด | แดชบอร์ดคู่มือคุณครู |
 | `house_sample.jpg` | 823 KB | ภาพตัวอย่างบ้าน (ฝังเป็น Base64 ในฟอร์ม) |
 | `family_sample.jpg` | 918 KB | ภาพตัวอย่างครอบครัว (ฝังเป็น Base64 ในฟอร์ม) |
@@ -118,45 +112,17 @@ Google Apps Script render HTML ใน sandboxed iframe ที่บล็อก 
 
 ---
 
-## 🐍 6. คู่มือซิงค์ข้อมูลผ่าน Python Bot
-
-### 6.1 ตั้งค่าบน WSL
-ยืนยันว่าไฟล์ `.env` (`/home/tor19006/dschool-weekly-report-bot/.env`) มีค่า:
-```env
-GOOGLE_SHEET_ID=15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo
-```
-
-### 6.2 สั่งซิงค์
-```bash
-python3 dschool_visit_sync.py
-```
-
-### 6.3 ขั้นตอนอัตโนมัติของบอท
-1. ดึงแถวข้อมูลจาก Google Sheet
-2. ตรวจสอบ Timestamp → ซิงค์เฉพาะแถวใหม่
-3. ดาวน์โหลดภาพ 2 รูปจาก Google Drive (OAuth)
-4. Login เข้า D-School → จับคู่นักเรียนรายคน
-5. อัปโหลดภาพไปที่ `savetofile.php`
-6. ส่งฟอร์ม 155 ฟิลด์ไปที่ `visit.php`
-7. บันทึกสถานะลง `dschool_visit_sync_state.json`
-
----
-
-## 🛡️ 7. การบำรุงรักษา (Maintenance & Troubleshooting)
+## 🛡️ 6. การบำรุงรักษา (Maintenance & Troubleshooting)
 
 * **GPS ไม่ทำงาน:** ตรวจสอบว่านักเรียนเปิด URL ของ GitHub Pages (ไม่ใช่ URL ของ Google Apps Script) และอนุญาต permission ตำแหน่งในเบราว์เซอร์
 * **ภาพถ่าย:** ระบบบังคับอัปโหลดรูปแนวนอน (กว้าง > สูง) เท่านั้น — ระบบจะบล็อกรูปแนวตั้งอัตโนมัติ
 * **ภาพบังคับ 2 รูป:** ฟอร์มไม่ยอมส่งหากไม่อัปโหลดทั้งรูปบ้านและรูปครอบครัว
-* **เซสชัน D-School หมดอายุ:** รันเช็คสิทธิ์:
-  ```bash
-  GOG_KEYRING_PASSWORD=tp121158 gog status
-  ```
 * **อัปเดตฟอร์ม:** แก้ไข `visit_form.html` → `git add -A && git commit -m "..." && git push` → GitHub Pages อัปเดตอัตโนมัติ
 * **อัปเดต Backend:** แก้ `Code.gs` ใน Apps Script → Deploy → Manage deployments → New version
 
 ---
 
-## 📋 8. รายชื่อนักเรียน ม.5/12 (32 คน)
+## 📋 7. รายชื่อนักเรียน ม.5/12 (32 คน)
 
 | ลำดับ | รหัส | ชื่อ-นามสกุล |
 |---|---|---|
