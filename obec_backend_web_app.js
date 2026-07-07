@@ -11,8 +11,10 @@
  * 7. Set:
  *    - Execute as: "Me" (your email)
  *    - Who has access: "Anyone" (so students can submit without logging in).
- * 8. Click "Deploy", authorize the permissions, and copy the "Web app URL".
- * 9. Paste the copied Web app URL into the `visit_form.html` file (replacing "REPLACE_WITH_WEB_APP_URL" on line ~js).
+ * 8. Select `authorizeRequiredServices` in the function dropdown and click "Run" once.
+ *    Approve the Google Sheets/Drive permissions when prompted.
+ * 9. Click "Deploy", authorize the permissions, and copy the "Web app URL".
+ * 10. Paste the copied Web app URL into the `visit_form.html` file (replacing "REPLACE_WITH_WEB_APP_URL" on line ~js).
  */
 
 var SPREADSHEET_ID = "15WANqgFkntecn1oYcmPuFaQ_ORtZIdvnifhhUvNd-Mo"; // Linked to OBEC Home Visit Sheet
@@ -116,6 +118,21 @@ function saveBase64File(base64Data, filename, folder) {
   var file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   return file;
+}
+
+// Run this once from the Apps Script editor after deploying/updating code.
+// It forces Google to ask for the Spreadsheet and Drive permissions used by submissions.
+function authorizeRequiredServices() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var folderName = "OBEC_Home_Visit_Photos";
+  var folders = DriveApp.getFoldersByName(folderName);
+  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  
+  return {
+    status: "success",
+    spreadsheetName: ss.getName(),
+    folderName: folder.getName()
+  };
 }
 
 // Serve the visit_form.html page on GET request
